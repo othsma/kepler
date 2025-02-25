@@ -1,40 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useThemeStore, useTicketsStore, useClientsStore } from '../lib/store';
 import { Search, Plus, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
+import TicketForm from '../components/TicketForm';
 
 export default function Tickets() {
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
-  const { tickets, addTicket, updateTicket, filterStatus, setFilterStatus } = useTicketsStore();
+  const { tickets, updateTicket, filterStatus, setFilterStatus } = useTicketsStore();
   const { clients } = useClientsStore();
   const [isAddingTicket, setIsAddingTicket] = useState(false);
-  const [formData, setFormData] = useState({
-    clientId: '',
-    deviceType: '',
-    issue: '',
-    priority: 'medium' as const,
-    cost: 0,
-    technicianId: '',
-    status: 'pending' as const,
-  });
+  const [editingTicket, setEditingTicket] = useState<string | null>(null);
+  const [clientSearch, setClientSearch] = useState('');
+  const [selectedClientId, setSelectedClientId] = useState<string>('');
+
+  const filteredClients = useMemo(() => {
+    return clients.filter((client) =>
+      client.name.toLowerCase().includes(clientSearch.toLowerCase()) ||
+      client.email.toLowerCase().includes(clientSearch.toLowerCase())
+    );
+  }, [clients, clientSearch]);
 
   const filteredTickets = tickets.filter(
     (ticket) => filterStatus === 'all' || ticket.status === filterStatus
   );
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    addTicket(formData);
-    setIsAddingTicket(false);
-    setFormData({
-      clientId: '',
-      deviceType: '',
-      issue: '',
-      priority: 'medium',
-      cost: 0,
-      technicianId: '',
-      status: 'pending',
-    });
-  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -107,96 +94,61 @@ export default function Tickets() {
         </button>
       </div>
 
-      {isAddingTicket && (
+      {(isAddingTicket || editingTicket) && (
         <div className={`rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow p-6`}>
           <h2 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-            Create New Ticket
+            {editingTicket ? 'Edit Ticket' : 'Create New Ticket'}
           </h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
+          {!editingTicket && (
+            <div className="mb-4">
               <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 Client
               </label>
-              <select
-                value={formData.clientId}
-                onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                required
-              >
-                <option value="">Select a client</option>
-                {clients.map((client) => (
-                  <option key={client.id} value={client.id}>
-                    {client.name}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={clientSearch}
+                  onChange={(e) => setClientSearch(e.target.value)}
+                  placeholder="Search for a client..."
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+                {clientSearch && filteredClients.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg">
+                    {filteredClients.map((client) => (
+                      <div
+                        key={client.id}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                        onClick={() => {
+                          setSelectedClientId(client.id);
+                          setClientSearch(client.name);
+                        }}
+                      >
+                        <div className="font-medium">{client.name}</div>
+                        <div className="text-sm text-gray-500">{client.email}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-            <div>
-              <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Device Type
-              </label>
-              <input
-                type="text"
-                value={formData.deviceType}
-                onChange={(e) => setFormData({ ...formData, deviceType: e.target.value })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                required
-              />
-            </div>
-            <div>
-              <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Issue Description
-              </label>
-              <textarea
-                value={formData.issue}
-                onChange={(e) => setFormData({ ...formData, issue: e.target.value })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                required
-              />
-            </div>
-            <div>
-              <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Priority
-              </label>
-              <select
-                value={formData.priority}
-                onChange={(e) => setFormData({ ...formData, priority: e.target.value as 'low' | 'medium' | 'high' })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                required
-              >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </select>
-            </div>
-            <div>
-              <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Estimated Cost
-              </label>
-              <input
-                type="number"
-                value={formData.cost}
-                onChange={(e) => setFormData({ ...formData, cost: Number(e.target.value) })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                required
-              />
-            </div>
-            <div className="flex justify-end gap-4">
-              <button
-                type="button"
-                onClick={() => setIsAddingTicket(false)}
-                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
-              >
-                Create Ticket
-              </button>
-            </div>
-          </form>
+          )}
+          <TicketForm
+            clientId={editingTicket ? tickets.find(t => t.id === editingTicket)?.clientId : selectedClientId}
+            onSubmit={() => {
+              setIsAddingTicket(false);
+              setEditingTicket(null);
+              setClientSearch('');
+              setSelectedClientId('');
+            }}
+            onCancel={() => {
+              setIsAddingTicket(false);
+              setEditingTicket(null);
+              setClientSearch('');
+              setSelectedClientId('');
+            }}
+            editingTicket={editingTicket}
+            initialData={editingTicket ? tickets.find(t => t.id === editingTicket) : undefined}
+          />
         </div>
       )}
 
@@ -213,34 +165,47 @@ export default function Tickets() {
                   <div className="flex items-center gap-2">
                     {getStatusIcon(ticket.status)}
                     <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                      {client?.name} - {ticket.deviceType}
+                      {client?.name}
                     </h3>
                   </div>
-                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                    {ticket.issue}
-                  </p>
-                  <div className="mt-2 flex gap-4">
-                    <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                      Priority: {ticket.priority}
-                    </span>
-                    <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <div className="mt-2 space-y-1">
+                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      Device: {ticket.deviceType} ({ticket.brand})
+                    </p>
+                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      Task: {ticket.task}
+                    </p>
+                    {ticket.issue && (
+                      <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        Issue: {ticket.issue}
+                      </p>
+                    )}
+                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                       Cost: ${ticket.cost}
-                    </span>
+                    </p>
                   </div>
                 </div>
-                <select
-                  value={ticket.status}
-                  onChange={(e) =>
-                    updateTicket(ticket.id, {
-                      status: e.target.value as 'pending' | 'in-progress' | 'completed',
-                    })
-                  }
-                  className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                >
-                  <option value="pending">Pending</option>
-                  <option value="in-progress">In Progress</option>
-                  <option value="completed">Completed</option>
-                </select>
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => setEditingTicket(ticket.id)}
+                    className="px-4 py-2 text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                  >
+                    Edit
+                  </button>
+                  <select
+                    value={ticket.status}
+                    onChange={(e) =>
+                      updateTicket(ticket.id, {
+                        status: e.target.value as 'pending' | 'in-progress' | 'completed',
+                      })
+                    }
+                    className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                </div>
               </div>
             </div>
           );

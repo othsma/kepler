@@ -64,25 +64,42 @@ interface Ticket {
   id: string;
   clientId: string;
   deviceType: string;
-  issue: string;
+  brand: string;
+  task: string;
+  issue?: string;
   status: 'pending' | 'in-progress' | 'completed';
-  priority: 'low' | 'medium' | 'high';
   cost: number;
   technicianId: string;
+  passcode?: string;
   createdAt: string;
   updatedAt: string;
 }
 
+interface TicketSettings {
+  deviceTypes: string[];
+  brands: string[];
+  tasks: string[];
+}
+
 interface TicketsState {
   tickets: Ticket[];
+  settings: TicketSettings;
   addTicket: (ticket: Omit<Ticket, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateTicket: (id: string, ticket: Partial<Ticket>) => void;
   filterStatus: 'all' | 'pending' | 'in-progress' | 'completed';
   setFilterStatus: (status: 'all' | 'pending' | 'in-progress' | 'completed') => void;
+  addDeviceType: (type: string) => void;
+  addBrand: (brand: string) => void;
+  addTask: (task: string) => void;
 }
 
 export const useTicketsStore = create<TicketsState>((set) => ({
   tickets: [],
+  settings: {
+    deviceTypes: ['Mobile', 'Tablet', 'PC', 'Console'],
+    brands: ['Apple', 'Samsung', 'Huawei'],
+    tasks: ['Battery', 'Screen'],
+  },
   filterStatus: 'all',
   setFilterStatus: (status) => set({ filterStatus: status }),
   addTicket: (ticket) =>
@@ -108,6 +125,27 @@ export const useTicketsStore = create<TicketsState>((set) => ({
             }
           : ticket
       ),
+    })),
+  addDeviceType: (type) =>
+    set((state) => ({
+      settings: {
+        ...state.settings,
+        deviceTypes: [...state.settings.deviceTypes, type],
+      },
+    })),
+  addBrand: (brand) =>
+    set((state) => ({
+      settings: {
+        ...state.settings,
+        brands: [...state.settings.brands, brand],
+      },
+    })),
+  addTask: (task) =>
+    set((state) => ({
+      settings: {
+        ...state.settings,
+        tasks: [...state.settings.tasks, task],
+      },
     })),
 }));
 
