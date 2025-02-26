@@ -37,8 +37,35 @@ interface ClientsState {
   updateClient: (id: string, client: Partial<Client>) => void;
 }
 
+const fakeClients: Client[] = [
+  {
+    id: '1',
+    name: 'John Doe',
+    email: 'john.doe@example.com',
+    phone: '123-456-7890',
+    address: '123 Main St',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: '2',
+    name: 'Jane Smith',
+    email: 'jane.smith@example.com',
+    phone: '987-654-3210',
+    address: '456 Elm St',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: '3',
+    name: 'Robert Jones',
+    email: 'robert.jones@example.com',
+    phone: '555-123-4567',
+    address: '789 Oak St',
+    createdAt: new Date().toISOString(),
+  },
+];
+
 export const useClientsStore = create<ClientsState>((set) => ({
-  clients: [],
+  clients: fakeClients,
   searchQuery: '',
   setSearchQuery: (query) => set({ searchQuery: query }),
   addClient: (client) =>
@@ -117,8 +144,56 @@ const generateTicketNumber = () => {
   return `${month}${randomNum}`;
 };
 
+const fakeTickets: Ticket[] = [
+  {
+    id: '1',
+    ticketNumber: 'oct1234',
+    clientId: '1',
+    deviceType: 'Mobile',
+    brand: 'Apple',
+    model: 'iPhone 14',
+    tasks: ['Screen Replacement'],
+    issue: 'Cracked screen',
+    status: 'in-progress',
+    cost: 150,
+    technicianId: '1',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: '2',
+    ticketNumber: 'oct5678',
+    clientId: '2',
+    deviceType: 'Tablet',
+    brand: 'Samsung',
+    model: 'Galaxy Tab S8',
+    tasks: ['Battery Replacement'],
+    issue: 'Battery draining quickly',
+    status: 'pending',
+    cost: 100,
+    technicianId: '2',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: '3',
+    ticketNumber: 'oct9012',
+    clientId: '3',
+    deviceType: 'PC',
+    brand: 'Dell',
+    model: 'XPS 13',
+    tasks: ['Software Installation'],
+    issue: 'Operating system not booting',
+    status: 'completed',
+    cost: 50,
+    technicianId: '1',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+];
+
 export const useTicketsStore = create<TicketsState>((set) => ({
-  tickets: [],
+  tickets: fakeTickets,
   settings: {
     deviceTypes: ['Mobile', 'Tablet', 'PC', 'Console'],
     brands: ['Apple', 'Samsung', 'Huawei'],
@@ -279,8 +354,41 @@ interface ProductsState {
   updateStock: (id: string, quantity: number) => void;
 }
 
+const fakeProducts: Product[] = [
+  {
+    id: '1',
+    name: 'iPhone 14',
+    category: 'Phones',
+    price: 999,
+    stock: 10,
+    sku: 'IP14-128',
+    description: 'The latest iPhone with a stunning display and powerful camera.',
+    imageUrl: 'https://example.com/iphone14.jpg',
+  },
+  {
+    id: '2',
+    name: 'Samsung Galaxy Tab S8',
+    category: 'Tablets',
+    price: 799,
+    stock: 5,
+    sku: 'SGT-S8',
+    description: 'A powerful tablet for work and play.',
+    imageUrl: 'https://example.com/galaxytabs8.jpg',
+  },
+  {
+    id: '3',
+    name: 'Dell XPS 13',
+    category: 'Laptops',
+    price: 1299,
+    stock: 8,
+    sku: 'DXPS13',
+    description: 'A lightweight and powerful laptop for professionals.',
+    imageUrl: 'https://example.com/dellxps13.jpg',
+  },
+];
+
 export const useProductsStore = create<ProductsState>((set) => ({
-  products: [],
+  products: fakeProducts,
   categories: ['Phones', 'Tablets', 'Laptops', 'Accessories'],
   searchQuery: '',
   selectedCategory: 'all',
@@ -336,8 +444,35 @@ interface OrdersState {
   updateOrderStatus: (orderId: string, status: Order['status']) => void;
 }
 
+const fakeOrders: Order[] = [
+  {
+    id: '1',
+    items: [{ productId: '1', quantity: 1 }],
+    total: 999,
+    status: 'completed',
+    clientId: '1',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: '2',
+    items: [{ productId: '2', quantity: 1 }],
+    total: 799,
+    status: 'pending',
+    clientId: '2',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: '3',
+    items: [{ productId: '3', quantity: 1 }],
+    total: 1299,
+    status: 'completed',
+    clientId: '3',
+    createdAt: new Date().toISOString(),
+  },
+];
+
 export const useOrdersStore = create<OrdersState>((set) => ({
-  orders: [],
+  orders: fakeOrders,
   cart: [],
   addToCart: (productId, quantity) =>
     set((state) => ({
