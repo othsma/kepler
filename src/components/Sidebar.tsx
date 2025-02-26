@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, PenTool as Tool, ShoppingCart, Wrench } from 'lucide-react';
+import { LayoutDashboard, Users, PenTool as Tool, ShoppingCart, Wrench, Settings } from 'lucide-react';
 import { useThemeStore } from '../lib/store';
 
 const navigation = [
@@ -16,6 +16,7 @@ const navigation = [
       { name: 'Orders', href: '/pos/orders' },
     ],
   },
+  { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
 export default function Sidebar() {
@@ -42,6 +43,7 @@ export default function Sidebar() {
                     : `${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`
                 }`
               }
+              end
             >
               <item.icon className="h-5 w-5 mr-3" />
               {item.name}

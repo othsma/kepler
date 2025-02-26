@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useThemeStore, useTicketsStore } from '../lib/store';
+import { Plus } from 'lucide-react';
 
 interface TicketFormProps {
   clientId?: string;
@@ -9,6 +10,7 @@ interface TicketFormProps {
   initialData?: {
     deviceType: string;
     brand: string;
+    model: string;
     tasks: string[];
     issue: string;
     cost: number;
@@ -19,13 +21,16 @@ interface TicketFormProps {
 
 export default function TicketForm({ clientId, onSubmit, onCancel, editingTicket, initialData }: TicketFormProps) {
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
-  const { settings, addTicket, updateTicket, addDeviceType, addBrand, addTask } = useTicketsStore();
+  const { settings, addTicket, updateTicket, addDeviceType, addBrand, addModel, addTask } = useTicketsStore();
 
   const [deviceTypeSearch, setDeviceTypeSearch] = useState('');
   const [brandSearch, setBrandSearch] = useState('');
+  const [newModelName, setNewModelName] = useState('');
+  const [isAddingModel, setIsAddingModel] = useState(false);
   const [formData, setFormData] = useState({
     deviceType: initialData?.deviceType || '',
     brand: initialData?.brand || '',
+    model: initialData?.model || '',
     tasks: initialData?.tasks || [],
     issue: initialData?.issue || '',
     cost: initialData?.cost || 0,
@@ -84,8 +89,17 @@ export default function TicketForm({ clientId, onSubmit, onCancel, editingTicket
     if (!settings.brands.includes(brand)) {
       addBrand(brand);
     }
-    setFormData({ ...formData, brand });
+    setFormData({ ...formData, brand, model: '' });
     setBrandSearch('');
+  };
+
+  const handleAddNewModel = () => {
+    if (newModelName.trim() && formData.brand) {
+      addModel({ name: newModelName.trim(), brandId: formData.brand });
+      setFormData({ ...formData, model: newModelName.trim() });
+      setNewModelName('');
+      setIsAddingModel(false);
+    }
   };
 
   const filteredDeviceTypes = settings.deviceTypes.filter(type => 
@@ -94,6 +108,10 @@ export default function TicketForm({ clientId, onSubmit, onCancel, editingTicket
 
   const filteredBrands = settings.brands.filter(brand => 
     brand.toLowerCase().includes(brandSearch.toLowerCase())
+  );
+
+  const availableModels = settings.models.filter(model => 
+    model.brandId === formData.brand
   );
 
   return (
@@ -151,7 +169,7 @@ export default function TicketForm({ clientId, onSubmit, onCancel, editingTicket
             onChange={(e) => {
               setBrandSearch(e.target.value);
               if (!e.target.value) {
-                setFormData({ ...formData, brand: '' });
+                setFormData({ ...formData, brand: '', model: '' });
               }
             }}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -180,6 +198,67 @@ export default function TicketForm({ clientId, onSubmit, onCancel, editingTicket
             </div>
           )}
         </div>
+      </div>
+
+      <div>
+        <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+          Model
+        </label>
+        {isAddingModel ? (
+          <div className="flex gap-2 mt-1">
+            <input
+              type="text"
+              value={newModelName}
+              onChange={(e) => setNewModelName(e.target.value)}
+              placeholder="Enter new model name"
+              className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              autoFocus
+            />
+            <button
+              type="button"
+              onClick={handleAddNewModel}
+              className="px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+            >
+              Add
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsAddingModel(false);
+                setNewModelName('');
+              }}
+              className="px-3 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-2 mt-1">
+            <select
+              value={formData.model}
+              onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              required
+            >
+              <option value="">Select a model</option>
+              {availableModels.map((model) => (
+                <option key={model.id} value={model.name}>
+                  {model.name}
+                </option>
+              ))}
+            </select>
+            {formData.brand && (
+              <button
+                type="button"
+                onClick={() => setIsAddingModel(true)}
+                className="px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 flex items-center gap-1"
+              >
+                <Plus className="h-4 w-4" />
+                New
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       <div>

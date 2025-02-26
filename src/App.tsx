@@ -6,6 +6,7 @@ import Clients from './pages/Clients';
 import Tickets from './pages/Tickets';
 import Products from './pages/Products';
 import Orders from './pages/Orders';
+import Settings from './pages/Settings';
 
 function App() {
   return (
@@ -17,10 +18,11 @@ function App() {
           <Route path="tickets" element={<Tickets />} />
           <Route path="pos/products" element={<Products />} />
           <Route path="pos/orders" element={<Orders />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
     </BrowserRouter>
   );
 }
 
-export default App;
+export default App
