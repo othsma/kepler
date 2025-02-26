@@ -21,10 +21,15 @@ export default function Clients() {
     address: '',
   });
 
-  const filteredClients = clients.filter((client) =>
-    client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    client.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredClients = clients.filter((client) => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      client.name.toLowerCase().includes(searchLower) ||
+      client.email.toLowerCase().includes(searchLower) ||
+      client.phone.toLowerCase().includes(searchLower) ||
+      client.address.toLowerCase().includes(searchLower)
+    );
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,7 +107,6 @@ export default function Clients() {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                required
               />
             </div>
             <div>
@@ -125,7 +129,6 @@ export default function Clients() {
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                required
               />
             </div>
             <div className="flex justify-end gap-4">
@@ -291,7 +294,7 @@ export default function Clients() {
                               <p className={`text-sm ${
                                 isDarkMode ? 'text-gray-400' : 'text-gray-500'
                               }`}>
-                                Task: {ticket.task}
+                                Tasks: {ticket.tasks.join(', ')}
                               </p>
                               {ticket.issue && (
                                 <p className={`text-sm ${

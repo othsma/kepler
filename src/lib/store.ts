@@ -60,12 +60,19 @@ export const useClientsStore = create<ClientsState>((set) => ({
     })),
 }));
 
+interface TicketSettings {
+  deviceTypes: string[];
+  brands: string[];
+  tasks: string[];
+}
+
 interface Ticket {
   id: string;
+  ticketNumber: string;
   clientId: string;
   deviceType: string;
   brand: string;
-  task: string;
+  tasks: string[];
   issue?: string;
   status: 'pending' | 'in-progress' | 'completed';
   cost: number;
@@ -75,16 +82,10 @@ interface Ticket {
   updatedAt: string;
 }
 
-interface TicketSettings {
-  deviceTypes: string[];
-  brands: string[];
-  tasks: string[];
-}
-
 interface TicketsState {
   tickets: Ticket[];
   settings: TicketSettings;
-  addTicket: (ticket: Omit<Ticket, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  addTicket: (ticket: Omit<Ticket, 'id' | 'ticketNumber' | 'createdAt' | 'updatedAt'>) => void;
   updateTicket: (id: string, ticket: Partial<Ticket>) => void;
   filterStatus: 'all' | 'pending' | 'in-progress' | 'completed';
   setFilterStatus: (status: 'all' | 'pending' | 'in-progress' | 'completed') => void;
@@ -93,12 +94,18 @@ interface TicketsState {
   addTask: (task: string) => void;
 }
 
+const generateTicketNumber = () => {
+  const month = new Date().toLocaleString('en-US', { month: 'short' }).toLowerCase();
+  const randomNum = Math.floor(1000 + Math.random() * 9000);
+  return `${month}${randomNum}`;
+};
+
 export const useTicketsStore = create<TicketsState>((set) => ({
   tickets: [],
   settings: {
     deviceTypes: ['Mobile', 'Tablet', 'PC', 'Console'],
     brands: ['Apple', 'Samsung', 'Huawei'],
-    tasks: ['Battery', 'Screen'],
+    tasks: ['Battery', 'Screen', 'Motherboard', 'Software', 'Camera', 'Speaker'],
   },
   filterStatus: 'all',
   setFilterStatus: (status) => set({ filterStatus: status }),
@@ -109,6 +116,7 @@ export const useTicketsStore = create<TicketsState>((set) => ({
         {
           ...ticket,
           id: Math.random().toString(36).substr(2, 9),
+          ticketNumber: generateTicketNumber(),
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         },

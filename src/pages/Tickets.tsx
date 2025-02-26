@@ -1,7 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { useThemeStore, useTicketsStore, useClientsStore } from '../lib/store';
-import { Search, Plus, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Search, Plus, Clock, AlertTriangle, CheckCircle, FileText } from 'lucide-react';
 import TicketForm from '../components/TicketForm';
+import ThermalReceipt from '../components/ThermalReceipt';
+import InvoiceForm from '../components/InvoiceForm';
+import ClientForm from '../components/ClientForm';
 
 export default function Tickets() {
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
@@ -11,6 +14,11 @@ export default function Tickets() {
   const [editingTicket, setEditingTicket] = useState<string | null>(null);
   const [clientSearch, setClientSearch] = useState('');
   const [selectedClientId, setSelectedClientId] = useState<string>('');
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [showQuote, setShowQuote] = useState(false);
+  const [showInvoice, setShowInvoice] = useState(false);
+  const [newTicketNumber, setNewTicketNumber] = useState('');
+  const [isAddingClient, setIsAddingClient] = useState(false);
 
   const filteredClients = useMemo(() => {
     return clients.filter((client) =>
@@ -34,6 +42,12 @@ export default function Tickets() {
       default:
         return null;
     }
+  };
+
+  const handleNewClient = (clientId: string) => {
+    setSelectedClientId(clientId);
+    setClientSearch(clients.find(c => c.id === clientId)?.name || '');
+    setIsAddingClient(false);
   };
 
   return (
@@ -99,20 +113,33 @@ export default function Tickets() {
           <h2 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
             {editingTicket ? 'Edit Ticket' : 'Create New Ticket'}
           </h2>
-          {!editingTicket && (
+          
+          {!editingTicket && !isAddingClient && (
             <div className="mb-4">
               <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 Client
               </label>
               <div className="relative">
-                <input
-                  type="text"
-                  value={clientSearch}
-                  onChange={(e) => setClientSearch(e.target.value)}
-                  placeholder="Search for a client..."
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                />
-                {clientSearch && filteredClients.length > 0 && (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={clientSearch}
+                    onChange={(e) => {
+                      setClientSearch(e.target.value);
+                      setSelectedClientId('');
+                    }}
+                    placeholder="Search for a client..."
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingClient(true)}
+                    className="mt-1 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                  >
+                    New Client
+                  </button>
+                </div>
+                {clientSearch && !selectedClientId && !isAddingClient && filteredClients.length > 0 && (
                   <div className="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg">
                     {filteredClients.map((client) => (
                       <div
@@ -132,24 +159,64 @@ export default function Tickets() {
               </div>
             </div>
           )}
-          <TicketForm
-            clientId={editingTicket ? tickets.find(t => t.id === editingTicket)?.clientId : selectedClientId}
-            onSubmit={() => {
-              setIsAddingTicket(false);
-              setEditingTicket(null);
-              setClientSearch('');
-              setSelectedClientId('');
-            }}
-            onCancel={() => {
-              setIsAddingTicket(false);
-              setEditingTicket(null);
-              setClientSearch('');
-              setSelectedClientId('');
-            }}
-            editingTicket={editingTicket}
-            initialData={editingTicket ? tickets.find(t => t.id === editingTicket) : undefined}
-          />
+
+          {isAddingClient ? (
+            <ClientForm
+              onSubmit={handleNewClient}
+              onCancel={() => setIsAddingClient(false)}
+            />
+          ) : (
+            <TicketForm
+              clientId={editingTicket ? tickets.find(t => t.id === editingTicket)?.clientId : selectedClientId}
+              onSubmit={(ticketNumber) => {
+                setIsAddingTicket(false);
+                setEditingTicket(null);
+                setClientSearch('');
+                if (ticketNumber) {
+                  setNewTicketNumber(ticketNumber);
+                  setShowReceipt(true);
+                }
+              }}
+              onCancel={() => {
+                setIsAddingTicket(false);
+                setEditingTicket(null);
+                setClientSearch('');
+                setSelectedClientId('');
+              }}
+              editingTicket={editingTicket}
+              initialData={editingTicket ? tickets.find(t => t.id === editingTicket) : undefined}
+            />
+          )}
         </div>
+      )}
+
+      {showReceipt && (
+        <ThermalReceipt
+          ticket={tickets.find(t => t.ticketNumber === newTicketNumber)!}
+          clientId={selectedClientId}
+          onClose={() => {
+            setShowReceipt(false);
+            setNewTicketNumber('');
+          }}
+        />
+      )}
+
+      {showQuote && (
+        <InvoiceForm
+          ticket={tickets.find(t => t.ticketNumber === newTicketNumber)!}
+          clientId={selectedClientId}
+          onClose={() => setShowQuote(false)}
+          type="quote"
+        />
+      )}
+
+      {showInvoice && (
+        <InvoiceForm
+          ticket={tickets.find(t => t.ticketNumber === newTicketNumber)!}
+          clientId={selectedClientId}
+          onClose={() => setShowInvoice(false)}
+          type="invoice"
+        />
       )}
 
       <div className="grid gap-6">
@@ -165,7 +232,7 @@ export default function Tickets() {
                   <div className="flex items-center gap-2">
                     {getStatusIcon(ticket.status)}
                     <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                      {client?.name}
+                      {client?.name} - #{ticket.ticketNumber}
                     </h3>
                   </div>
                   <div className="mt-2 space-y-1">
@@ -173,7 +240,7 @@ export default function Tickets() {
                       Device: {ticket.deviceType} ({ticket.brand})
                     </p>
                     <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                      Task: {ticket.task}
+                      Tasks: {ticket.tasks.join(', ')}
                     </p>
                     {ticket.issue && (
                       <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -185,10 +252,42 @@ export default function Tickets() {
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-4">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setNewTicketNumber(ticket.ticketNumber);
+                      setSelectedClientId(ticket.clientId);
+                      setShowReceipt(true);
+                    }}
+                    className="px-3 py-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                  >
+                    Receipt
+                  </button>
+                  <button
+                    onClick={() => {
+                      setNewTicketNumber(ticket.ticketNumber);
+                      setSelectedClientId(ticket.clientId);
+                      setShowQuote(true);
+                    }}
+                    className="px-3 py-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                  >
+                    Quote
+                  </button>
+                  {ticket.status === 'completed' && (
+                    <button
+                      onClick={() => {
+                        setNewTicketNumber(ticket.ticketNumber);
+                        setSelectedClientId(ticket.clientId);
+                        setShowInvoice(true);
+                      }}
+                      className="px-3 py-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                    >
+                      Invoice
+                    </button>
+                  )}
                   <button
                     onClick={() => setEditingTicket(ticket.id)}
-                    className="px-4 py-2 text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                    className="px-3 py-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700"
                   >
                     Edit
                   </button>
